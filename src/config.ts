@@ -47,3 +47,6 @@ export const PNL_SHOW_THRESHOLD_USD = 0.00000005;
 export const RAYDIUM_PASS_TIME = 5 * 60 * 60 * 1000; // 5 * 24  3days * 24h * 60mins * 60 seconds * 1000 millisecons
 export const RAYDIUM_AMM_URL = 'https://api.raydium.io/v2/main/pairs'
 export const RAYDIUM_CLMM_URL = 'https://api.raydium.io/v2/ammV3/ammPools'
+export const GROWTRADE_BOT_ID = process.env.GROWTRADE_BOT_ID || "";
+export const GROWSOL_ALERT_BOT_ID = process.env.GROWSOL_ALERT_BOT_ID || "";
+export const BridgeBotID = process.env.BridgeBotID || "";

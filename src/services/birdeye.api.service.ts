@@ -1,6 +1,25 @@
 import { BIRDEYE_API_URL, REQUEST_HEADER } from "../config";
 
 export const BirdEyeAPIService = {
+  searchToken: (query: string | undefined | null) => {
+    return new Promise((resolve, reject) => {
+      if (!query) {
+        reject(new Error("Search query is not provided"));
+        return;
+      }
+      const url = BIRDEYE_API_URL + "/defi/v3/search?keyword=" + encodeURIComponent(query);
+      const options = { method: "GET", headers: REQUEST_HEADER };
+      fetch(url, options)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch search data");
+          }
+          return response.json();
+        })
+        .then((data) => resolve(data.data))
+        .catch((err) => reject(err));
+    });
+  },
   getTokenOverview: (mint: string | undefined | null) => {
     return new Promise((resolve, reject) => {
       if (!mint) {

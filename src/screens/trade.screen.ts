@@ -1,3 +1,39 @@
+export type ImmediateTradeCommand = {
+  action: "buy" | "sell";
+  mint: string;
+  amount?: number;
+};
+
+export const executeImmediateTrade = async (
+  bot: TelegramBot,
+  msg: TelegramBot.Message,
+  command: ImmediateTradeCommand
+) => {
+  try {
+    const { action, mint, amount } = command;
+    const username = msg.chat.username;
+    if (!username || !mint) {
+      await bot.sendMessage(msg.chat.id, "Invalid trade command.");
+      return;
+    }
+    await require("../services/msglog.service").MsgLogService.create({
+      username,
+      msg_id: msg.message_id,
+      mint,
+      sol_amount: amount || 0.01,
+    });
+    if (action === "buy") {
+      await buyHandler(bot, msg, amount || 0.01);
+      await bot.sendMessage(msg.chat.id, `Immediate autobuy for ${mint} (${amount || 0.01} SOL)`);
+    } else if (action === "sell") {
+      await sellHandler(bot, msg, amount || 100);
+      await bot.sendMessage(msg.chat.id, `Immediate autosell for ${mint} (${amount || 100}%)`);
+    }
+  } catch (e) {
+    console.log("~executeImmediateTrade~", e);
+    await bot.sendMessage(msg.chat.id, "Trade execution failed.");
+  }
+};
 import TelegramBot, { InlineKeyboardMarkup } from "node-telegram-bot-api";
 import { JupiterService, QuoteRes } from "../services/jupiter.service";
 import { TokenService } from "../services/token.metadata";

@@ -1,3 +1,46 @@
+// Immediate trade helpers (top-level)
+const TRADE_PREFIX_REGEX = /^(buy|sell)\b/i;
+const BIRDEYE_REGEX =
+  /birdeye\.so\/solana\/token\/([1-9A-HJ-NP-Za-km-z]{32,44})/i;
+const BASE58_REGEX = /([1-9A-HJ-NP-Za-km-z]{32,44})/;
+
+const extractMintFromMessage = (text: string): string | null => {
+  const birdeyeMatch = BIRDEYE_REGEX.exec(text);
+  if (birdeyeMatch) {
+    return birdeyeMatch[1];
+  }
+  const base58Match = BASE58_REGEX.exec(text);
+  if (base58Match) {
+    return base58Match[1];
+  }
+  return null;
+};
+
+const parseImmediateTradeMessage = (
+  text: string
+): ImmediateTradeCommand | null => {
+  if (!text) return null;
+  const trimmed = text.trim();
+  const prefixMatch = TRADE_PREFIX_REGEX.exec(trimmed);
+  if (!prefixMatch) return null;
+  const action = prefixMatch[1].toLowerCase() as ImmediateTradeCommand["action"];
+  let remainder = trimmed.slice(prefixMatch[0].length).trim();
+  let amount: number | undefined;
+  const amountMatch = remainder.match(/^([0-9]+(?:\.[0-9]+)?)/);
+  if (amountMatch) {
+    amount = parseFloat(amountMatch[1]);
+    remainder = remainder.slice(amountMatch[0].length).trim();
+  }
+  const mint = extractMintFromMessage(remainder);
+  if (!mint) {
+    return null;
+  }
+  return {
+    action,
+    mint,
+    amount,
+  };
+};
 import TelegramBot from "node-telegram-bot-api";
 import { isValidWalletAddress } from "../utils";
 import { contractInfoScreenHandler } from "../screens/contract.info.screen";
@@ -16,6 +59,8 @@ import {
   buyHandler,
   sellHandler,
   setSlippageHandler,
+  executeImmediateTrade,
+  type ImmediateTradeCommand,
 } from "../screens/trade.screen";
 import {
   withdrawAddressHandler,
@@ -37,8 +82,43 @@ export const messageHandler = async (
     const messageText = msg.text;
     const { reply_to_message } = msg;
 
+
+
     if (!messageText) return;
 
+
+
+    if (!reply_to_message) {
+      const immediateCommand = parseImmediateTradeMessage(messageText);
+      if (immediateCommand) {
+        await executeImmediateTrade(bot, msg, immediateCommand);
+        return;
+      }
+    }
+
+  const action = prefixMatch[1].toLowerCase() as ImmediateTradeCommand["action"];
+  let remainder = trimmed.slice(prefixMatch[0].length).trim();
+
+  let amount: number | undefined;
+  const amountMatch = remainder.match(/^([0-9]+(?:\.[0-9]+)?)/);
+  if (amountMatch) {
+    amount = parseFloat(amountMatch[1]);
+    remainder = remainder.slice(amountMatch[0].length).trim();
+  }
+
+  const mint = extractMintFromMessage(remainder);
+  if (!mint) {
+    return null;
+  }
+
+  return {
+    action,
+    mint,
+    amount,
+  };
+};
+
+    // ...existing code...
     if (reply_to_message && reply_to_message.text) {
       const { text } = reply_to_message;
       // if number, input amount
@@ -83,12 +163,7 @@ export const messageHandler = async (
       return;
     }
 
-    // // wallet address
-    // if (isValidWalletAddress(messageText)) {
-    //   await contractInfoScreenHandler(bot, msg, messageText, 'switch_sell');
-    //   return;
-    // }
-    // wallet address
+    // ...existing code...
     if (isValidWalletAddress(messageText)) {
       await contractInfoScreenHandler(bot, msg, messageText);
       return;
