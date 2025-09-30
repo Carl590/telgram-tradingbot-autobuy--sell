@@ -96,27 +96,6 @@ export const messageHandler = async (
       }
     }
 
-  const action = prefixMatch[1].toLowerCase() as ImmediateTradeCommand["action"];
-  let remainder = trimmed.slice(prefixMatch[0].length).trim();
-
-  let amount: number | undefined;
-  const amountMatch = remainder.match(/^([0-9]+(?:\.[0-9]+)?)/);
-  if (amountMatch) {
-    amount = parseFloat(amountMatch[1]);
-    remainder = remainder.slice(amountMatch[0].length).trim();
-  }
-
-  const mint = extractMintFromMessage(remainder);
-  if (!mint) {
-    return null;
-  }
-
-  return {
-    action,
-    mint,
-    amount,
-  };
-};
 
     // ...existing code...
     if (reply_to_message && reply_to_message.text) {
