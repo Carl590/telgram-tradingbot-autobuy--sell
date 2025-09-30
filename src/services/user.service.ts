@@ -1,9 +1,53 @@
 import { UserSchema } from "../models/index";
+import {
+  decryptSensitiveValue,
+  encryptSensitiveValue,
+  hashSensitiveValue,
+} from "../utils/crypto";
+
+const prepareUserPayload = (props: any) => {
+  if (!props) return props;
+  const { private_key, ...rest } = props;
+  if (typeof private_key === "string" && private_key) {
+    return {
+      ...rest,
+      private_key: encryptSensitiveValue(private_key),
+      private_key_hash: hashSensitiveValue(private_key),
+    };
+  }
+  return { ...rest };
+};
+
+const decryptUser = (result: any) => {
+  if (!result) return result;
+  const transform = (entry: any) => {
+    if (!entry) return entry;
+    const doc = entry.toObject ? entry.toObject() : { ...entry };
+    if (typeof doc.private_key === "string" && doc.private_key) {
+      try {
+        doc.private_key = decryptSensitiveValue(doc.private_key);
+      } catch (error) {
+        console.error("Failed to decrypt private key", {
+          username: doc.username,
+          error,
+        });
+      }
+    }
+    if ("private_key_hash" in doc) {
+      delete doc.private_key_hash;
+    }
+    return doc;
+  };
+
+  return Array.isArray(result) ? result.map(transform) : transform(result);
+};
 
 export const UserService = {
   create: async (props: any) => {
     try {
-      return await UserSchema.create(props);
+      const payload = prepareUserPayload(props);
+      const user = await UserSchema.create(payload);
+      return decryptUser(user);
     } catch (err: any) {
       console.log(err);
       throw new Error(err.message);
@@ -14,7 +58,7 @@ export const UserService = {
       const { id } = props;
       const result = await UserSchema.findById(id);
 
-      return result;
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -24,7 +68,7 @@ export const UserService = {
       const filter = props;
       const result = await UserSchema.findOne({ ...filter, retired: false });
 
-      return result;
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -34,7 +78,7 @@ export const UserService = {
       const filter = props;
       const result = await UserSchema.findOne(filter).sort({ updatedAt: -1 });
 
-      return result;
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -44,7 +88,7 @@ export const UserService = {
     try {
       const result = await UserSchema.find(filter);
 
-      return result;
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -52,10 +96,11 @@ export const UserService = {
   findAndSort: async (props: any) => {
     const filter = props;
     try {
-      const result = await UserSchema.find(filter).sort({ retired: 1, nonce: 1 })
+      const result = await UserSchema.find(filter)
+        .sort({ retired: 1, nonce: 1 })
         .exec();
 
-      return result;
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -63,24 +108,31 @@ export const UserService = {
   updateOne: async (props: any) => {
     const { id } = props;
     try {
-      const result = await UserSchema.findByIdAndUpdate(id, props);
-      return result;
+      const payload = prepareUserPayload(props);
+      const result = await UserSchema.findByIdAndUpdate(id, payload, {
+        new: true,
+      });
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
   },
   findAndUpdateOne: async (filter: any, props: any) => {
     try {
-      const result = await UserSchema.findOneAndUpdate(filter, props);
-      return result;
+      const payload = prepareUserPayload(props);
+      const result = await UserSchema.findOneAndUpdate(filter, payload, {
+        new: true,
+      });
+      return decryptUser(result);
     } catch (err: any) {
       throw new Error(err.message);
     }
   },
   updateMany: async (filter: any, props: any) => {
     try {
+      const payload = prepareUserPayload(props);
       const result = await UserSchema.updateMany(filter, {
-        $set: props
+        $set: payload,
       });
       return result;
     } catch (err: any) {
@@ -89,7 +141,7 @@ export const UserService = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await UserSchema.findOneAndDelete({ props });
+      const result = await UserSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);

@@ -74,7 +74,7 @@ export const OpenMarketService = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await OpenMarketSchema.findOneAndDelete({ props });
+      const result = await OpenMarketSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);

@@ -81,7 +81,7 @@ export const RaydiumTokenService = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await TokenSchema.findOneAndDelete({ props });
+      const result = await TokenSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);

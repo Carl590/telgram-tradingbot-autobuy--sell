@@ -61,7 +61,7 @@ export const TradeService = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await TradeSchema.findOneAndDelete({ props });
+      const result = await TradeSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);
