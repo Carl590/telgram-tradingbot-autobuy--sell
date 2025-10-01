@@ -84,7 +84,10 @@ export class PNLService {
     const { sol_amount, received_sol_amount } = position;
     const { outAmount } = this.quote;
     const profitInSOL = outAmount + received_sol_amount - sol_amount;
-    const percent = profitInSOL * 100 / sol_amount;
+    if (sol_amount <= 0) {
+      return { profitInSOL, percent: null };
+    }
+    const percent = (profitInSOL * 100) / sol_amount;
     return { profitInSOL, percent };
   }
 

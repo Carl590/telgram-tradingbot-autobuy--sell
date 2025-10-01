@@ -395,13 +395,13 @@ export const generateNewWalletHandler = async (
       );
       return;
     }
-    // send private key & wallet address
+  // notify user about new wallet details without exposing private key
     const caption =
       `👍 Congrates! 👋\n\n` +
       `A new wallet has been generated for you. This is your wallet address\n\n` +
       `${wallet_address}\n\n` +
-      `<b>Save this private key below</b>❗\n\n` +
-      `<tg-spoiler>${private_key}</tg-spoiler>\n\n`;
+  `🔒 <b>Your private key has been securely stored.</b>\n` +
+  `For backup assistance please reach out to the GrowTrade support team.`;
 
     await bot.sendMessage(chat_id, caption, {
       parse_mode: "HTML",
@@ -441,27 +441,14 @@ export const revealWalletPrivatekyHandler = async (
     const user = await UserService.findLastOne({ username, nonce });
     console.log(user);
     if (!user) return;
-    // send private key & wallet address
-    const caption =
-      `🗝 <b>Your private key</b>\n` +
-      `<tg-spoiler>${user.private_key}</tg-spoiler>\n\n`;
-
-    await bot.sendMessage(chat_id, caption, {
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "❌ Dismiss message",
-              callback_data: JSON.stringify({
-                command: "dismiss_message",
-              }),
-            },
-          ],
-        ],
-      },
-    });
+    await bot.sendMessage(
+      chat_id,
+      `� For security reasons we can no longer reveal private keys over Telegram.\n` +
+        `Please contact GrowTrade support to complete a manual export.`,
+      {
+        disable_web_page_preview: true,
+      }
+    );
     // settingScreenHandler(bot, msg, msg.message_id);
   } catch (e) {
     console.log("~revealWalletPrivatekyHandler~", e);
@@ -1225,14 +1212,26 @@ export const pnlCardHandler = async (
     const pnlService = new PNLService(user.wallet_address, mint, quote);
     interface PNLData {
       profitInSOL: number;
-      percent: number;
+  percent: number | null;
     }
     await pnlService.initialize();
-    const pnldata = (await pnlService.getPNLInfo()) as PNLData;
-    const boughtInSOL = await pnlService.getBoughtAmount();
-    const { profitInSOL, percent } = pnldata
-      ? pnldata
-      : { profitInSOL: Number(0), percent: Number(0) };
+    const pnldata = (await pnlService.getPNLInfo()) as PNLData | null | undefined;
+    const boughtInSOLRaw = await pnlService.getBoughtAmount();
+    const profitInSOLRaw = pnldata?.profitInSOL;
+    const percentRaw = pnldata?.percent;
+    const profitInSOL =
+      typeof profitInSOLRaw === "number" && isFinite(profitInSOLRaw)
+        ? profitInSOLRaw
+        : 0;
+  // profitInUSD is declared below, so remove this duplicate
+    const percent =
+      typeof percentRaw === "number" && isFinite(percentRaw)
+        ? percentRaw
+        : 0;
+    const boughtInSOL =
+      typeof boughtInSOLRaw === "number" && isFinite(boughtInSOLRaw)
+        ? boughtInSOLRaw
+        : 0;
     const profitInUSD = profitInSOL * Number(solPrice);
     console.log(
       "PNL data ->",
