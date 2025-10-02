@@ -1,7 +1,19 @@
-
 # Telegram Solana Trading Bot
 
 A production-oriented Telegram bot that automates token discovery, execution, and portfolio tracking across the Solana ecosystem. The bot connects to Raydium AMM/CLMM pools, Jupiter, and Pump.fun to execute trades using Jito-powered transactions while managing user preferences and risk controls.
+
+## Core Auto-Trading Flow
+
+The primary workflow of the bot is an event-driven **auto-buy / auto-sell loop** that reacts to Telegram messages:
+
+1. **Trigger Detection** – When a message containing the keyword `buy` and a valid Solana contract address is posted in a configured Telegram chat (direct message with the bot or a group conversation), the bot parses the address from the message body.
+2. **Quote & Validation** – The extracted contract address is validated against supported liquidity sources (Raydium, Jupiter, Pump.fun). The bot confirms the token is tradable, checks configured risk controls (slippage, max size, liquidity thresholds), and determines the optimal swap route.
+3. **Auto-Buy Execution** – After validation, the bot automatically purchases the token using the user’s configured allocation. Transactions are submitted through Jito bundles when available to minimize frontrunning.
+4. **Position Monitoring** – Token positions acquired through auto-buy are tracked in MongoDB for portfolio reporting, exposure management, and follow-up automation.
+5. **Auto-Sell Trigger** – When a message containing the keyword `sell` and a contract address is posted, the bot looks up the user’s holdings for that address and automatically sells **100%** of the tracked balance via the same routing engine used for buys.
+6. **Post-Trade Reporting** – Fill confirmations, PnL updates, and any execution alerts are published back into Telegram chats and persisted for dashboards or scheduled reports.
+
+This messaging-first workflow enables teams to orchestrate fast-moving trades by broadcasting simple chat commands while the bot enforces guardrails and handles settlement. The automation layers on top of traditional trading features such as limit/market order support, scheduled strategies, and granular risk controls.
 
 ## Functional Overview
 
@@ -43,6 +55,7 @@ A production-oriented Telegram bot that automates token discovery, execution, an
 
 ## Project Structure
 
+```
 src/
   main.ts                # Application bootstrap and dependency wiring
   bot.opts.ts            # Telegram bot command/keyboard configuration
@@ -58,33 +71,33 @@ src/
 ## Setup
 
 1. **Install dependencies**
-	```sh
-	npm install
-	```
+    ```sh
+    npm install
+    ```
 2. **Configure environment** by creating a `.env` file in the project root:
-	```ini
-	MONGODB_URL=
-	REDIS_URI=
+    ```ini
+    MONGODB_URL=
+    REDIS_URI=
 
-	GROWTRADE_BOT_ID=
-	GROWSOL_ALERT_BOT_ID=
-	BridgeBotID=
-	ALERT_BOT_API_TOKEN=
-	TELEGRAM_BOT_API_TOKEN=
+    GROWTRADE_BOT_ID=
+    GROWSOL_ALERT_BOT_ID=
+    BridgeBotID=
+    ALERT_BOT_API_TOKEN=
+    TELEGRAM_BOT_API_TOKEN=
 
-	MAINNET_RPC=
-	PRIVATE_RPC_ENDPOINT=
-	RPC_WEBSOCKET_ENDPOINT=
+    MAINNET_RPC=
+    PRIVATE_RPC_ENDPOINT=
+    RPC_WEBSOCKET_ENDPOINT=
 
-	JITO_UUID=
-	BIRD_EVE_API=
-	GROWSOL_API_ENDPOINT=
-	PNL_IMG_GENERATOR_API=
-	```
+    JITO_UUID=
+    BIRD_EVE_API=
+    GROWSOL_API_ENDPOINT=
+    PNL_IMG_GENERATOR_API=
+    ```
 3. **Run the bot**
-	```sh
-	npm run serve
-	```
+    ```sh
+    npm run serve
+    ```
 
 ## Operational Notes
 
