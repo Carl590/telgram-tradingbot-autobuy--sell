@@ -61,7 +61,7 @@ export const ReferralHistoryControler = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await ReferralHistorySchema.findOneAndDelete({ props });
+  const result = await ReferralHistorySchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);

@@ -93,13 +93,12 @@ const newUserHandler = async (bot: TelegramBot, msg: TelegramBot.Message) => {
     return false;
   }
 
-  // send private key & wallet address
   const caption =
     `👋 Welcome to GrowTradeBot!\n\n` +
     `A new wallet has been generated for you. This is your wallet address\n\n` +
     `${wallet_address}\n\n` +
-    `<b>Save this private key below</b>❗\n\n` +
-    `<tg-spoiler>${private_key}</tg-spoiler>\n\n` +
+    `🔒 <b>Your private key has been encrypted and stored securely.</b>\n` +
+    `Please contact GrowTrade support if you require an offline export.\n\n` +
     `<b>To get started, please read our <a href="https://docs.growsol.io">docs</a></b>`;
 
   await bot.sendMessage(chat_id, caption, {

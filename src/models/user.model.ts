@@ -53,6 +53,12 @@ const User = new Schema(
       required: true,
       unique: true,
     },
+    private_key_hash: {
+      type: String,
+      default: "",
+      required: true,
+      unique: true,
+    },
     wallet_address: {
       type: String,
       default: "",

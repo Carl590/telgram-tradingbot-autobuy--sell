@@ -74,7 +74,7 @@ export const MsgLogService = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await MsgLogSchema.findOneAndDelete({ props });
+  const result = await MsgLogSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);

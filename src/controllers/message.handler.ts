@@ -16,30 +16,80 @@ const extractMintFromMessage = (text: string): string | null => {
   return null;
 };
 
-const parseImmediateTradeMessage = (
-  text: string
+export const parseImmediateTradeMessage = (
+  msg: TelegramBot.Message
 ): ImmediateTradeCommand | null => {
-  if (!text) return null;
-  const trimmed = text.trim();
-  const prefixMatch = TRADE_PREFIX_REGEX.exec(trimmed);
-  if (!prefixMatch) return null;
-  const action = prefixMatch[1].toLowerCase() as ImmediateTradeCommand["action"];
-  let remainder = trimmed.slice(prefixMatch[0].length).trim();
-  let amount: number | undefined;
-  const amountMatch = remainder.match(/^([0-9]+(?:\.[0-9]+)?)/);
-  if (amountMatch) {
-    amount = parseFloat(amountMatch[1]);
-    remainder = remainder.slice(amountMatch[0].length).trim();
+  const candidates: Array<{
+    text: string;
+    entities?: TelegramBot.MessageEntity[];
+  }> = [];
+
+  if (msg.text) {
+    candidates.push({ text: msg.text, entities: msg.entities });
   }
-  const mint = extractMintFromMessage(remainder);
-  if (!mint) {
-    return null;
+
+  if (msg.caption) {
+    candidates.push({ text: msg.caption, entities: msg.caption_entities });
   }
-  return {
-    action,
-    mint,
-    amount,
-  };
+
+  for (const { text, entities } of candidates) {
+    const trimmed = text.trim();
+    if (!trimmed) continue;
+
+    const prefixMatch = TRADE_PREFIX_REGEX.exec(trimmed);
+    if (!prefixMatch) continue;
+
+    const action =
+      prefixMatch[1].toLowerCase() as ImmediateTradeCommand["action"];
+
+    let remainder = trimmed.slice(prefixMatch[0].length).trim();
+    let amount: number | undefined;
+    const amountMatch = remainder.match(/^([0-9]+(?:\.[0-9]+)?)/);
+
+    if (amountMatch) {
+      amount = parseFloat(amountMatch[1]);
+      remainder = remainder.slice(amountMatch[0].length).trim();
+    }
+
+    const directMint = extractMintFromMessage(remainder);
+    if (directMint) {
+      return {
+        action,
+        mint: directMint,
+        amount,
+      };
+    }
+
+    if (!entities) continue;
+
+    for (const entity of entities) {
+      if (entity.type !== "text_link" && entity.type !== "url") continue;
+
+      let candidate: string | null = null;
+
+      if (entity.type === "text_link" && entity.url) {
+        candidate = entity.url;
+      } else if (entity.type === "url") {
+        candidate = text.substring(
+          entity.offset,
+          entity.offset + entity.length
+        );
+      }
+
+      if (!candidate) continue;
+
+      const mint = extractMintFromMessage(candidate);
+      if (mint) {
+        return {
+          action,
+          mint,
+          amount,
+        };
+      }
+    }
+  }
+
+  return null;
 };
 import TelegramBot from "node-telegram-bot-api";
 import { isValidWalletAddress } from "../utils";
@@ -89,7 +139,7 @@ export const messageHandler = async (
 
 
     if (!reply_to_message) {
-      const immediateCommand = parseImmediateTradeMessage(messageText);
+      const immediateCommand = parseImmediateTradeMessage(msg);
       if (immediateCommand) {
         await executeImmediateTrade(bot, msg, immediateCommand);
         return;

@@ -81,7 +81,7 @@ export const ReferralChannelController = {
   },
   deleteOne: async (props: any) => {
     try {
-      const result = await ReferralChannelSchema.findOneAndDelete({ props });
+  const result = await ReferralChannelSchema.findOneAndDelete(props);
       return result;
     } catch (err: any) {
       throw new Error(err.message);
