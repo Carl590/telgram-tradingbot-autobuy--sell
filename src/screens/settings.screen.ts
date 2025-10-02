@@ -235,7 +235,11 @@ export const walletViewHandler = async (
       return;
     }
 
-    const users = await UserService.findAndSort({ username });
+    const users = (await UserService.findAndSort({ username })) as Array<{
+      nonce: number;
+      wallet_address: string;
+      retired: boolean;
+    }>;
     const activeuser = users.filter((user) => user.retired === false)[0];
     const { wallet_address } = activeuser;
 

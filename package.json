@@ -6,8 +6,9 @@
   "scripts": {
     "serve": "nodemon ./serve.ts",
     "start": "npx ts-node serve.ts",
-    "build": "npm run clean && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "clean": "rm -rf dist",
+  "build": "npm run clean && tsc",
+  "test": "ts-node --transpile-only src/controllers/__tests__/message.handler.test.ts"
   },
   "keywords": [],
   "author": "",

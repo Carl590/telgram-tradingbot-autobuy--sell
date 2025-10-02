@@ -16,8 +16,9 @@ export const executeImmediateTrade = async (
       await bot.sendMessage(msg.chat.id, "Invalid trade command.");
       return;
     }
-    await require("../services/msglog.service").MsgLogService.create({
+    await MsgLogService.create({
       username,
+      chat_id,
       msg_id: msg.message_id,
       mint,
       sol_amount: amount || 0.01,
@@ -875,7 +876,9 @@ export const sellHandler = async (
       if (pnldata) {
         const { profitInSOL: profitSol, percent } = pnldata;
         profitInSOL = profitSol;
-        pnlPercent = percent;
+        if (typeof percent === "number") {
+          pnlPercent = percent;
+        }
       }
       const solPrice = await TokenService.getSOLPrice();
       const profitInUSD = profitInSOL * Number(solPrice);
