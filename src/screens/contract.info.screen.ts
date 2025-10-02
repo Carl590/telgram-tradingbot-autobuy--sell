@@ -620,7 +620,9 @@ const buildCaption = async (
     const { profitInSOL: profitSol, percent } = pnldata;
     profitInSOL = profitSol;
     if (typeof percent === "number") {
-      pnlPercent = percent;
+      if (typeof percent === "number") {
+        pnlPercent = percent;
+      }
     }
   }
   const profitInUSD = profitInSOL * Number(solprice);

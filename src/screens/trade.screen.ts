@@ -18,7 +18,7 @@ export const executeImmediateTrade = async (
     }
     await MsgLogService.create({
       username,
-      chat_id,
+  chat_id: msg.chat.id,
       msg_id: msg.message_id,
       mint,
       sol_amount: amount || 0.01,
@@ -877,7 +877,9 @@ export const sellHandler = async (
         const { profitInSOL: profitSol, percent } = pnldata;
         profitInSOL = profitSol;
         if (typeof percent === "number") {
-          pnlPercent = percent;
+          if (typeof percent === "number") {
+            pnlPercent = percent;
+          }
         }
       }
       const solPrice = await TokenService.getSOLPrice();
